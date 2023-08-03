@@ -6,7 +6,9 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.example.dictionaryapp.databinding.ActivityMainBinding
@@ -15,18 +17,31 @@ import com.jeevan.dictionaryapp.domain.model.DictionaryItem
 import com.jeevan.dictionaryapp.presentation.viewmodel.MainActivityViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
+
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var dataObserver: Observer<DictionaryItem>
     private lateinit var isLoadingObserver: Observer<Boolean>
+    private lateinit var isErrorObserver: Observer<Boolean>
     private val TAG = "MainActivity"
     private val viewModel: MainActivityViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        isErrorObserver = Observer {error ->
+            if(error) {
+                AlertDialog.Builder(this)
+                    .setCancelable(false)
+                    .setTitle("Error")
+                    .setMessage("Oops something went wrong! Please try again.")
+                    .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+                    .create().show()
+            }
+        }
 
         dataObserver = Observer { item ->
             binding.itemContainer.removeAllViews()
@@ -91,9 +106,21 @@ class MainActivity : AppCompatActivity() {
         }
         viewModel.data.observe(this, dataObserver)
         viewModel.isLoading.observe(this, isLoadingObserver)
+        viewModel.isError.observe(this, isErrorObserver)
 
         binding.searchButton.setOnClickListener {
             viewModel.getDictionaryItem(binding.wordText.text.toString())
+            closeKeyboard()
+        }
+    }
+
+    private fun closeKeyboard() {
+        val view = this.currentFocus
+
+        if (view != null) {
+
+            val manager = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+            manager.hideSoftInputFromWindow(view.windowToken, 0)
         }
     }
 
@@ -101,5 +128,6 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         viewModel.data.removeObserver(dataObserver)
         viewModel.isLoading.removeObserver(isLoadingObserver)
+        viewModel.isError.removeObserver(isErrorObserver)
     }
 }

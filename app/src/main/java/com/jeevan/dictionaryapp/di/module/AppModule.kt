@@ -3,6 +3,7 @@ package com.jeevan.dictionaryapp.di.module
 import android.content.Context
 import androidx.room.Room
 import com.jeevan.dictionaryapp.core.Constants.BASE_URL
+import com.jeevan.dictionaryapp.core.Constants.DATABASE_NAME
 import com.jeevan.dictionaryapp.data.local.DictionaryDatabase
 import com.jeevan.dictionaryapp.data.remote.DictionaryAPI
 import com.jeevan.dictionaryapp.data.repository.DictionaryRepositoryImpl
@@ -50,7 +51,7 @@ class AppModule {
     @Singleton
     @Provides
     fun provideDictionaryDatabase(@ApplicationContext app: Context) = Room
-        .databaseBuilder(app, DictionaryDatabase::class.java, "dictionary_db")
+        .databaseBuilder(app, DictionaryDatabase::class.java, DATABASE_NAME)
         .build()
 
     @Singleton

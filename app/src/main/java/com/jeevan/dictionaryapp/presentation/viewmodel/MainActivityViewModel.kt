@@ -23,6 +23,9 @@ class MainActivityViewModel @Inject constructor(
     private var _isLoading = MutableLiveData(false)
     val isLoading = _isLoading as LiveData<Boolean>
 
+    private var _isError = MutableLiveData(false)
+    val isError = _isError as LiveData<Boolean>
+
     private var _data = MutableLiveData<DictionaryItem>()
     val data = _data as LiveData<DictionaryItem>
 
@@ -34,16 +37,17 @@ class MainActivityViewModel @Inject constructor(
                     is Result.Success -> {
                         _data.postValue(item.data!!)
                         _isLoading.postValue(false)
+                        _isError.postValue(false)
                     }
 
                     is Result.Loading -> {
                         _isLoading.postValue(true)
+                        _isError.postValue(false)
                     }
 
                     is Result.Failure -> {
                         _isLoading.postValue(false)
-                        Toast.makeText(context.applicationContext, item.message, Toast.LENGTH_SHORT)
-                            .show()
+                        _isError.postValue(true)
                     }
                 }
             }
