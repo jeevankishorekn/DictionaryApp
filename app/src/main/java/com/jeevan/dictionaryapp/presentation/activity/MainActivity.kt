@@ -1,12 +1,17 @@
 package com.jeevan.dictionaryapp.presentation.activity
 
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
+import android.speech.RecognizerIntent
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -16,6 +21,7 @@ import com.example.dictionaryapp.databinding.WordDetailViewBinding
 import com.jeevan.dictionaryapp.domain.model.DictionaryItem
 import com.jeevan.dictionaryapp.presentation.viewmodel.MainActivityViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.Locale
 
 
 @AndroidEntryPoint
@@ -27,13 +33,29 @@ class MainActivity : AppCompatActivity() {
     private lateinit var isErrorObserver: Observer<Boolean>
     private val TAG = "MainActivity"
     private val viewModel: MainActivityViewModel by viewModels()
+    private lateinit var resultLauncher: ActivityResultLauncher<Intent>
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        isErrorObserver = Observer {error ->
-            if(error) {
+        try {
+            resultLauncher =
+                registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                    if (it.resultCode == RESULT_OK) {
+                        var result = it.data?.getStringArrayListExtra(
+                            RecognizerIntent.EXTRA_RESULTS
+                        )
+                        Log.d(TAG, "onCreate: ${result?.get(0)}")
+                        binding.wordText.setText(result?.get(0))
+                    }
+                }
+        } catch (e: Exception) {
+            Toast.makeText(this, " " + e.message, Toast.LENGTH_SHORT).show()
+        }
+
+        isErrorObserver = Observer { error ->
+            if (error) {
                 AlertDialog.Builder(this)
                     .setCancelable(false)
                     .setTitle("Error")
@@ -112,7 +134,24 @@ class MainActivity : AppCompatActivity() {
             viewModel.getDictionaryItem(binding.wordText.text.toString())
             closeKeyboard()
         }
+
+        binding.speechToTextBtn.setOnClickListener {
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+            intent.putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+            )
+            intent.putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE,
+                Locale.getDefault()
+            )
+            intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak Now")
+            resultLauncher.launch(intent)
+
+
+        }
     }
+
 
     private fun closeKeyboard() {
         val view = this.currentFocus

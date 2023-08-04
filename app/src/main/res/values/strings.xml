@@ -6,4 +6,5 @@
     <string name="definition">Definition</string>
     <string name="example">Example</string>
     <string name="synonyms">Synonyms</string>
+    <string name="speechtotextbutton">speechToTextButton</string>
 </resources>
